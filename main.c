@@ -59,6 +59,8 @@ GLuint texture[10];
 
 GLfloat origin[] = {0.f, 0.f, 0.f, 0.f};
 
+
+
 void init() {
     //habilita a iluminação da cena
     glEnable(GL_COLOR_MATERIAL);
@@ -122,15 +124,17 @@ void drawMoon(GLUquadric *qobj, GLfloat t_rot, GLfloat t_trans, float radius) {
 
     glRotatef(25, 0.0, 0.0, 0.0);
     glRotatef(t_rot, 0.0, 1.0, 0.0);
-    glTranslatef(0.38, 0.0, 0.0);
+    glTranslatef(0.15, 0.0, 0.0);
 
     gluSphere(qobj, radius, 60, 60);
     
     glDisable(GL_TEXTURE_2D);
+    
 }
 
 void drawPlanets(GLfloat t_rot, GLfloat t_trans, float radius, float dist2sun, int hasMoon, GLuint planet_texture) {
 
+    
     GLUquadric *qobj = gluNewQuadric();
 
 	gluQuadricOrientation(qobj, GLU_OUTSIDE);	
@@ -155,15 +159,17 @@ void drawPlanets(GLfloat t_rot, GLfloat t_trans, float radius, float dist2sun, i
         glPopMatrix();
 
         //if a planet has moon
-        if(hasMoon) {
+        if(hasMoon == 1) {
             drawMoon(qobj, 0.2, 0.5, 0.013);
-		}
+		} 
 
     gluDeleteQuadric(qobj);
     glPopMatrix();
 }
 
 void display(void) {
+
+
     glMatrixMode(GL_MODELVIEW);
 
     glClear(GL_COLOR_BUFFER_BIT);
