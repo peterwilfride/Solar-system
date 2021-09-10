@@ -10,7 +10,7 @@
 
 //control variables
 static double inc = 0,  
-              fov = 85;
+              fov = 5;
 
 //distances from sun
 static double d_mercurio = 1.8/10.0,
@@ -30,7 +30,8 @@ static double r_mercurio = 0.02,
               r_jupiter = 0.1,
               r_saturno = 0.09,
               r_urano = 0.07,
-              r_netuno = 0.07;
+              r_netuno = 0.07,
+              r_sun = 0.12;
 
 //rotation time of each planet
 float rot_mercurio = 0.0,
@@ -40,7 +41,8 @@ float rot_mercurio = 0.0,
       rot_jupiter = 0.0,
       rot_saturno = 0.0,
       rot_urano = 0.0,
-      rot_netuno = 0.0;
+      rot_netuno = 0.0,
+      rot_moon = 0.0;
 
 //translation time of each planet
 float t_mercurio = 0.0,
@@ -50,7 +52,18 @@ float t_mercurio = 0.0,
       t_jupiter = 0.0,
       t_saturno = 0.0,
       t_urano = 0.0,
-      t_netuno = 0.0;
+      t_netuno = 0.0,
+      t_moon = 0.0;
+
+//inclination degrees of each planet
+static double inc_mercurio = -90,
+              inc_venus = -90,
+              inc_terra = -90,
+              inc_marte = -90,
+              inc_jupiter = -90,
+              inc_saturno = -30,
+              inc_urano = -90,
+              inc_netuno = -90;
 
 // set center of scene
 GLfloat xref=0, yref=0, zref=0;
@@ -59,7 +72,7 @@ GLuint texture[10];
 
 GLfloat origin[] = {0.f, 0.f, 0.f, 0.f};
 
-
+//int hasMoon = 0;
 
 void init() {
     //habilita a iluminação da cena
@@ -118,23 +131,31 @@ void drawCircunferences(GLfloat x, GLfloat y, GLfloat radius){
 	glPopMatrix();
 }
 
-void drawMoon(GLUquadric *qobj, GLfloat t_rot, GLfloat t_trans, float radius) {
+void drawMoon(GLfloat t_rot, GLfloat t_trans, float radius, float dist2planet, GLuint moon_texture) {
+    GLUquadric *qobj = gluNewQuadric();
+
+	gluQuadricOrientation(qobj, GLU_OUTSIDE);	
+	gluQuadricDrawStyle(qobj, GLU_FILL);
+
+    gluQuadricTexture(qobj,GL_TRUE);
+	gluQuadricNormals(qobj, GLU_SMOOTH);
+
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture[9]);
+    glBindTexture(GL_TEXTURE_2D, moon_texture);
 
-    glRotatef(25, 0.0, 0.0, 0.0);
-    glRotatef(t_rot, 0.0, 1.0, 0.0);
-    glTranslatef(0.15, 0.0, 0.0);
+    glPushMatrix();
+        glRotatef(0, 0.0, 0.0, 0.0); 
+        glRotatef(t_trans, 0.0, 1.0, 0.0);
+        glTranslatef(dist2planet, 0.0, 0.0);
+        gluSphere(qobj, radius, 60, 60);
+    glPopMatrix();
 
-    gluSphere(qobj, radius, 60, 60);
+    gluDeleteQuadric(qobj);
     
     glDisable(GL_TEXTURE_2D);
-    
 }
 
-void drawPlanets(GLfloat t_rot, GLfloat t_trans, float radius, float dist2sun, int hasMoon, GLuint planet_texture) {
-
-    
+void drawPlanets(GLfloat t_rot, GLfloat t_trans, float radius, GLfloat incl, float dist2sun, GLfloat hasMoon, GLfloat hasRings, GLuint planet_texture) {
     GLUquadric *qobj = gluNewQuadric();
 
 	gluQuadricOrientation(qobj, GLU_OUTSIDE);	
@@ -153,23 +174,39 @@ void drawPlanets(GLfloat t_rot, GLfloat t_trans, float radius, float dist2sun, i
 
         glPushMatrix();
             glRotatef(t_rot, 0.0, 1.0, 0.0);
-            glRotated(-90, 1, 0, 0); 
+            glRotated(-90, 1, 0, 0);
+            glRotated(incl, 0, 0, 1); 
             gluSphere(qobj, radius, 60, 60); //planet
             glDisable(GL_TEXTURE_2D);
         glPopMatrix();
 
-        //if a planet has moon
-        if(hasMoon == 1) {
-            drawMoon(qobj, 0.2, 0.5, 0.013);
-		} 
+        gluDeleteQuadric(qobj);
 
-    gluDeleteQuadric(qobj);
+        //if a planet has moon
+        if(hasMoon == 1.0) {
+            drawMoon(rot_moon, t_moon, 0.02, 0.10, texture[9]); //moon
+		}
+
+        //if a planet has rings, like saturn
+        if(hasRings) {
+            glPushMatrix();
+                glRotatef(30, 1.0, 0.0, 0.0);
+                drawCircunferences(0, 0, 0.13);
+                drawCircunferences(0, 0, 0.133);
+                drawCircunferences(0, 0, 0.136);
+                drawCircunferences(0, 0, 0.142);
+                drawCircunferences(0, 0, 0.145);
+                drawCircunferences(0, 0, 0.151);
+                drawCircunferences(0, 0, 0.154);
+                drawCircunferences(0, 0, 0.157);
+                drawCircunferences(0, 0, 0.16);
+            glPopMatrix();
+        }
+
     glPopMatrix();
 }
 
 void display(void) {
-
-
     glMatrixMode(GL_MODELVIEW);
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -181,43 +218,35 @@ void display(void) {
     gluQuadricTexture(qobj, GL_TRUE);
 	gluQuadricNormals(qobj, GLU_SMOOTH);
 
-    glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, texture[0]);
-
     glEnable(GL_DEPTH_TEST);
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearDepth(1.0);
-	
-	glPushMatrix();
-	glRotated(-90, 1, 0, 0);    
-    gluSphere(qobj, 0.12, 60, 60); //sol
-	gluDeleteQuadric(qobj);
-	glPopMatrix();
-    glDisable(GL_TEXTURE_2D);
+
+    drawPlanets(0, 0, r_sun, 0, 0, 0, 0, texture[0]); //sol
 
     drawCircunferences(0, 0, d_mercurio);
-    drawPlanets(rot_mercurio, t_mercurio, r_mercurio, d_mercurio, 0, texture[1]);
+    drawPlanets(rot_mercurio, t_mercurio, r_mercurio, inc_mercurio,  d_mercurio, 0, 0, texture[1]);
 
     drawCircunferences(0, 0, d_venus);
-    drawPlanets(rot_venus, t_venus, r_venus, d_venus, 0, texture[2]);
+    drawPlanets(rot_venus, t_venus, r_venus, inc_venus, d_venus, 0, 0, texture[2]);
 
     drawCircunferences(0, 0, d_terra);
-    drawPlanets(rot_terra, t_terra, r_terra, d_terra, 1, texture[3]);
+    drawPlanets(rot_terra, t_terra, r_terra, inc_terra, d_terra, 1.0, 0, texture[3]);
 
     drawCircunferences(0, 0, d_marte);
-    drawPlanets(rot_marte, t_marte, r_marte, d_marte, 0, texture[4]);
+    drawPlanets(rot_marte, t_marte, r_marte, inc_marte, d_marte, 0, 0, texture[4]);
 
     drawCircunferences(0, 0, d_jupiter);
-    drawPlanets(rot_jupiter, t_jupiter,  r_jupiter, 0, d_jupiter, texture[5]);
+    drawPlanets(rot_jupiter, t_jupiter,  r_jupiter, inc_jupiter, d_jupiter, 0, 0, texture[5]);
 
     drawCircunferences(0, 0, d_saturno);
-    drawPlanets(rot_saturno, t_saturno, r_saturno, 0, d_saturno, texture[6]);
+    drawPlanets(rot_saturno, t_saturno, r_saturno, inc_saturno, d_saturno, 0, 1.0, texture[6]);
 
     drawCircunferences(0, 0, d_urano);
-    drawPlanets(rot_urano, t_urano, r_urano, d_urano, 0, texture[7]);
+    drawPlanets(rot_urano, t_urano, r_urano, inc_urano, d_urano, 0, 0, texture[7]);
 
     drawCircunferences(0, 0, d_netuno);
-    drawPlanets(rot_netuno, t_netuno, r_netuno, d_netuno, 0, texture[8]);
+    drawPlanets(rot_netuno, t_netuno, r_netuno, inc_netuno, d_netuno, 0, 0, texture[8]);
 
     glutSwapBuffers();
 }
@@ -226,13 +255,13 @@ void reshape(int w, int h) {
     glViewport(0, 0, (GLsizei) w, (GLsizei) h); 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fov, (GLfloat) w/(GLfloat) h, 1.0, 40.0);
+    gluPerspective(fov, (GLfloat) w/(GLfloat) h, 1.0, 80.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(  15.0+inc, 5, 0, 
+    gluLookAt(  15.0, 5+inc, 0, 
                 xref, yref, zref, 
                 0.0, 1.0, 0.0 );
-    glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );	//melhora a qualidade dos gráficos
+    glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );//melhora a qualidade dos gráficos
     glutPostRedisplay();
 }
 
@@ -256,19 +285,22 @@ void keyboard (unsigned char key, int x, int y) {
             break;
         case '-':
             if(fov < 110)
-                fov += 5;
+                fov += 1;
             reshape(1000,700);
             break;
         case '+':
-            if(fov > 0)
-                fov -= 5;
+            if(fov > 5)
+                fov -= 1;
             reshape(1000,700);
             break;
         case 'i':
-            if(inc > 5)
-                inc -= 1;
-            else if(inc < 15)
-                inc += 1;
+            if(inc > -5) inc += 1;
+            else inc = -4;
+            reshape(1000,700);
+            break;
+        case 'k':
+            if(inc < 5) inc -= 1;
+            else inc = 5;
             reshape(1000,700);
             break;
         case 27:
@@ -278,14 +310,15 @@ void keyboard (unsigned char key, int x, int y) {
 
 void idle(void) {
     //rotation
-	rot_mercurio -= 0.008,
-    rot_venus += 0.002,
-    rot_terra -= 0.5,
-    rot_marte -= 0.5,
-    rot_jupiter -= 1,
-    rot_saturno -= 1,
-    rot_urano -= 0.7,
+	rot_mercurio -= 0.008;
+    rot_venus += 0.002;
+    rot_terra -= 0.5;
+    rot_marte -= 0.5;
+    rot_jupiter -= 1;
+    rot_saturno -= 1;
+    rot_urano -= 0.7;
     rot_netuno -= 0.7;
+    rot_moon -= 0.2;
 
     //translation
     t_mercurio -= 0.47;
@@ -296,6 +329,7 @@ void idle(void) {
     t_saturno -= 0.003;
     t_urano -= 0.002;
     t_netuno -= 0.0023;
+    t_moon -= 1.0;
 
     glutPostRedisplay();
 }
