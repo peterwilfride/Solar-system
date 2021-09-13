@@ -1,7 +1,7 @@
 # Solar-system
 Modeling the solar system using opengl in C language.
 
-![Sistema Solar](/media/sistemasolar.png)
+![Solar System](/media/sistemasolar.png)
 
 ### compiling:
 ```
