@@ -1,6 +1,8 @@
 # Solar-system
 Modeling the solar system using opengl in C language.
 
+![Sistema Solar](/media/sistemasolar.png)
+
 ### compiling:
 ```
 gcc -c texture.c
